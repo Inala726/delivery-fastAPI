@@ -37,21 +37,21 @@ class UserResponse(BaseModel):
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ---------- DRIVER ----------
 class DriverCreate(BaseModel):
-    user_id: str
+    user_id: int
 
 
 class DriverResponse(BaseModel):
-    id: str
-    user_id: str
+    id: int
+    user_id: int
     is_available: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ---------- RESTAURANT ----------
@@ -69,7 +69,7 @@ class RestaurantResponse(BaseModel):
     owner_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ---------- MENU ITEM ----------
@@ -81,48 +81,48 @@ class MenuItemCreate(BaseModel):
 
 
 class MenuItemResponse(BaseModel):
-    id: str
+    id: int
     name: str
     description: Optional[str]
     price: float
     restaurant_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ---------- ORDER ITEM ----------
 class OrderItemCreate(BaseModel):
-    menu_item_id: str
+    menu_item_id: int
     quantity: float
 
 
 class OrderItemResponse(BaseModel):
-    id: str
-    order_id: str
-    menu_item_id: str
+    id: int
+    order_id: int
+    menu_item_id: int
     quantity: float
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ---------- ORDER ----------
 class OrderCreate(BaseModel):
-    customer_id: str
-    restaurant_id: str
+    customer_id: int
+    restaurant_id: int
     items: List[OrderItemCreate]
 
 
 class OrderResponse(BaseModel):
-    id: str
-    customer_id: str
-    restaurant_id: str
-    driver_id: Optional[str]
+    id: int
+    customer_id: int
+    restaurant_id: int
+    driver_id: Optional[int]
     total_price: float
     status: OrderStatus
     created_at: datetime
     items: List[OrderItemResponse]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
