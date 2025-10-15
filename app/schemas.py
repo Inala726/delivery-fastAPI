@@ -4,21 +4,28 @@ from pydantic import BaseModel, EmailStr
 from enum import Enum
 
 
+# ---------- AUTH ----------
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: 'UserResponse'
+
+
 # ---------- ENUMS ----------
 class UserRole(str, Enum):
-    CUSTOMER = "customer"
-    DRIVER = "driver"
-    RESTAURANT_OWNER = "restaurant_owner"
-    ADMIN = "admin"
+    customer = "customer"
+    driver = "driver"
+    restaurant_owner = "restaurant_owner"
+    admin = "admin"
 
 
 class OrderStatus(str, Enum):
-    PENDING = "pending"
-    ACCEPTED = "accepted"
-    PREPARING = "preparing"
-    ON_THE_WAY = "on_the_way"
-    DELIVERED = "delivered"
-    CANCELLED = "cancelled"
+    pending = "pending"
+    accepted = "accepted"
+    preparing = "preparing"
+    on_the_way = "on_the_way"
+    delivered = "delivered"
+    cancelled = "cancelled"
 
 
 # ---------- USER ----------
@@ -26,7 +33,7 @@ class UserCreate(BaseModel):
     name: str
     email: EmailStr
     password: str
-    role: Optional[UserRole] = UserRole.CUSTOMER
+    role: Optional[UserRole] = UserRole.customer
 
 
 class UserResponse(BaseModel):
@@ -78,6 +85,7 @@ class MenuItemCreate(BaseModel):
     description: Optional[str]
     price: float
     restaurant_id: int
+    image_url: Optional[str] = None
 
 
 class MenuItemResponse(BaseModel):
@@ -85,6 +93,7 @@ class MenuItemResponse(BaseModel):
     name: str
     description: Optional[str]
     price: float
+    image_url: Optional[str]
     restaurant_id: int
 
     class Config:

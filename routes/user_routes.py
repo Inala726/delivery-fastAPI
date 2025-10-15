@@ -1,10 +1,15 @@
-from typing import List
+from app.utils.token_util import hash_password
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import models, schemas, database
+from app.utils.role_checker import check_roles
+from app.utils.auth import get_current_user
+
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
+
+# Dependency for DB session
 def get_db():
     db = database.SessionLocal()
     try:
@@ -12,48 +17,38 @@ def get_db():
     finally:
         db.close()
 
-# ---------- CREATE USER ----------
+
 @router.post("/", response_model=schemas.UserResponse)
-def create_user(request: schemas.UserCreate, db: Session = Depends(get_db)):
-    # check if email already exists
-    existing_user = db.query(models.User).filter(models.User.email == request.email).first()
-    if existing_user:
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    existing = db.query(models.User).filter(models.User.email == user.email).first()
+    if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # hashed_password = Hash.bcrypt(request.password) if hasattr(Hash, "bcrypt") else request.password
-    new_user = models.User(
-        name=request.name,
-        email=request.email,
-        password=request.password,  # In production, ensure to hash the password
-        role=request.role
-    )
+    hashed_pw = hash_password(user.password)
+    new_user = models.User(name=user.name, email=user.email, password=hashed_pw)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     return new_user
 
-
-# ---------- GET ALL USERS ----------
-@router.get("/", response_model=List[schemas.UserResponse])
-def get_all_users(db: Session = Depends(get_db)):
-    users = db.query(models.User).all()
-    return users
+@router.get("/", response_model=list[schemas.UserResponse], dependencies=[Depends(check_roles(["admin"]))])
+def get_users(db: Session = Depends(get_db)):
+    return db.query(models.User).all()
 
 
-# ---------- GET USER BY ID ----------
-@router.get("/{id}", response_model=schemas.UserResponse)
-def get_user(id: int, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.id == id).first()
+@router.get("/{user_id}", response_model=schemas.UserResponse)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-# ---------- DELETE USER ----------
-@router.delete("/{id}", response_model=schemas.UserResponse)
-def delete_user(id: int, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.id == id).first()
+
+@router.delete("/{user_id}", dependencies=[Depends(check_roles(["admin"]))])
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     db.delete(user)
     db.commit()
-    return user
+    return {"message": "User deleted successfully"}

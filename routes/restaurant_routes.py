@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from typing import List
 from app import models, schemas, database
+from app.utils.role_checker import check_roles
+from app.utils.auth import get_current_user
 
 router = APIRouter(
     prefix="/restaurants",
@@ -17,8 +19,19 @@ def get_db():
 
 
 
-@router.post("/", response_model=schemas.RestaurantResponse)
-def create_restaurant(request: schemas.RestaurantCreate, db: Session = Depends(get_db)):
+@router.post("/", response_model=schemas.RestaurantResponse, dependencies=[Depends(check_roles(["restaurant_owner", "admin"]))])
+def create_restaurant(
+    request: schemas.RestaurantCreate, 
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    # Only allow admin to create restaurant for other users
+    if current_user.role != "admin" and current_user.id != request.owner_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Can only create restaurant for yourself"
+        )
+    
     new_restaurant = models.Restaurant(
         name=request.name,
         address=request.address,

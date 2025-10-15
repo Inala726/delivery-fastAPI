@@ -10,19 +10,19 @@ from .database import Base
 
 # ---------- ENUMS ----------
 class UserRole(enum.Enum):
-    CUSTOMER = "customer"
-    DRIVER = "driver"
-    RESTAURANT_OWNER = "restaurant_owner"
-    ADMIN = "admin"
+    customer = "customer"
+    driver = "driver"
+    restaurant_owner = "restaurant_owner"
+    admin = "admin"
 
 
 class OrderStatus(enum.Enum):
-    PENDING = "pending"
-    ACCEPTED = "accepted"
-    PREPARING = "preparing"
-    ON_THE_WAY = "on_the_way"
-    DELIVERED = "delivered"
-    CANCELLED = "cancelled"
+    pending = "pending"
+    accepted = "accepted"
+    preparing = "preparing"
+    on_the_way = "on_the_way"
+    delivered = "delivered"
+    cancelled = "cancelled"
 
 
 # ---------- USER ----------
@@ -33,7 +33,7 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.CUSTOMER)
+    role = Column(Enum(UserRole), default=UserRole.customer)
     is_active = Column(Boolean, default=True)
 
     restaurants = relationship("Restaurant", back_populates="owner")
@@ -64,6 +64,7 @@ class MenuItem(Base):
     name = Column(String, nullable=False)
     description = Column(String)
     price = Column(Float, nullable=False)
+    image_url = Column(String, nullable=True)  # URL to the stored image
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"), nullable=False)
 
     restaurant = relationship("Restaurant", back_populates="menu_items")
@@ -79,7 +80,7 @@ class Order(Base):
     restaurant_id = Column(Integer, ForeignKey("restaurants.id"), nullable=False)
     driver_id = Column(Integer, ForeignKey("drivers.id"), nullable=True)
     total_price = Column(Float, nullable=False)
-    status = Column(Enum(OrderStatus), default=OrderStatus.PENDING)
+    status = Column(Enum(OrderStatus), default=OrderStatus.pending)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     customer = relationship("User", back_populates="orders")

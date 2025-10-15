@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 from app import models, schemas, database
+from app.utils.cloudinary_util import upload_image, delete_image
 
 router = APIRouter(
     prefix="/menu",
@@ -21,13 +22,45 @@ def get_db():
 def create_menu_item(request: schemas.MenuItemCreate, db: Session = Depends(get_db)):
     new_item = models.MenuItem(
         name=request.name,
+        description=request.description,
         price=request.price,
-        restaurant_id=request.restaurant_id
+        restaurant_id=request.restaurant_id,
+        image_url=request.image_url
     )
     db.add(new_item)
     db.commit()
     db.refresh(new_item)
     return new_item
+
+@router.post("/{item_id}/upload-image")
+async def upload_menu_item_image(
+    item_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Upload an image for a menu item to Cloudinary"""
+    # Check if menu item exists
+    menu_item = db.query(models.MenuItem).filter(models.MenuItem.id == item_id).first()
+    if not menu_item:
+        raise HTTPException(status_code=404, detail="Menu item not found")
+    
+    # If there's an existing image, delete it from Cloudinary
+    if menu_item.image_url:
+        # Extract public_id from the URL
+        try:
+            old_public_id = menu_item.image_url.split("/")[-1].split(".")[0]
+            await delete_image(f"menu_items/{old_public_id}")
+        except:
+            pass  # If deletion fails, continue with upload
+    
+    # Upload new image to Cloudinary
+    result = await upload_image(file, folder="menu_items")
+    
+    # Update menu item with new image URL
+    menu_item.image_url = result["url"]
+    db.commit()
+    
+    return {"image_url": result["url"]}
 
 
 @router.get("/", response_model=List[schemas.MenuItemResponse])

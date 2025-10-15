@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app import models, database
-from routes import user_routes, restaurant_routes, menu_item_routes, order_routes, driver_routes
+from routes import user_routes, restaurant_routes, menu_item_routes, order_routes, driver_routes, auth_router
 
 
 # Create all tables at startup
@@ -18,7 +19,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static file directory
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 # routes
+app.include_router(auth_router.router)
 app.include_router(user_routes.router)
 app.include_router(restaurant_routes.router)
 app.include_router(menu_item_routes.router)
