@@ -18,7 +18,7 @@ def get_db():
         db.close()
 
 
-@router.post("/", response_model=schemas.UserResponse)
+@router.post("/", response_model=schemas.UserResponse, operation_id="create_user")
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     existing = db.query(models.User).filter(models.User.email == user.email).first()
     if existing:
@@ -31,12 +31,12 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-@router.get("/", response_model=list[schemas.UserResponse], dependencies=[Depends(check_roles(["admin"]))])
+@router.get("/", response_model=list[schemas.UserResponse], dependencies=[Depends(check_roles(["admin"]))], operation_id="get_users")
 def get_users(db: Session = Depends(get_db)):
     return db.query(models.User).all()
 
 
-@router.get("/{user_id}", response_model=schemas.UserResponse)
+@router.get("/{user_id}", response_model=schemas.UserResponse, operation_id="get_user")
 def get_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
@@ -44,7 +44,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     return user
 
 
-@router.delete("/{user_id}", dependencies=[Depends(check_roles(["admin"]))])
+@router.delete("/{user_id}", dependencies=[Depends(check_roles(["admin"]))], operation_id="delete_user")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:

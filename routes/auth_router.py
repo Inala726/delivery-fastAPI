@@ -1,53 +1,3 @@
-# #
-# from fastapi import APIRouter, Depends, HTTPException, status
-# from sqlalchemy.orm import Session
-# from pydantic import BaseModel, EmailStr
-# from app import models, database
-# from app.utils import verify_password
-# from app.utils.auth import create_access_token
-
-# router = APIRouter(prefix="/auth", tags=["Authentication"])
-
-
-# # Dependency to get database session
-# def get_db():
-#     db = database.SessionLocal()
-#     try:
-#         yield db
-#     finally:
-#         db.close()
-
-
-# # Request model for login
-# class LoginRequest(BaseModel):
-#     email: EmailStr
-#     password: str
-
-
-# # Response model for token
-# class TokenResponse(BaseModel):
-#     access_token: str
-#     token_type: str = "bearer"
-
-
-# @router.post("/login", response_model=TokenResponse)
-# def login(data: LoginRequest, db: Session = Depends(get_db)):
-#     """
-#     Authenticate a user using email and password, then issue a JWT access token.
-#     """
-#     user = db.query(models.User).filter(models.User.email == data.email).first()
-#     if not user or not verify_password(data.password, user.password):
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Invalid credentials",
-#         )
-
-#     # Generate JWT token with user ID
-#     token = create_access_token({"user_id": user.id})
-
-#     return {"access_token": token, "token_type": "bearer"}
-
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -97,6 +47,16 @@ async def login(
 @router.post("/token/test", response_model=UserResponse)
 async def test_token(current_user = Depends(get_current_user)):
     """
-    Test access token
+    Test access token endpoint
+    """
+    return current_user
+
+
+# ✅ NEW ENDPOINT
+@router.get("/me", response_model=UserResponse, operation_id="get_profile")
+async def get_profile(current_user: models.User = Depends(get_current_user)):
+    """
+    Retrieve the currently logged-in user's profile.
+    Returns user data based on the JWT token.
     """
     return current_user
